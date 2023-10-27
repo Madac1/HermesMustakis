@@ -39,6 +39,10 @@ int velocidadDer;       //Guarda la velocidad del motor izquierdo
 int sensor_lateral_derecho;
 int sensor_lateral_izquierdo;
 
+int geo = 0, geo1 = 0, geo2 = 0, geo3 = 0, geo4 = 0, geo5 = 0;
+int umbral = 750;
+int fin = 0;
+
 QTRSensorsAnalog qtra((unsigned char[]){ A5, A4, A3, A2, A1, A0 }, NUM_SENSOR, NUM_SAMPLES_PER_SENSOR, EMITTER_PIN);
 unsigned int sensorValues[NUM_SENSOR];
 
@@ -121,4 +125,75 @@ void loop() {
   sensor_lateral_derecho = analogRead(SENSOR_LATERAL_DER);
   sensor_lateral_izquierdo = analogRead(SENSOR_LATERAL_IZQ);
   
+}
+
+
+void hitos() {
+  int Hiz = analogRead(SENSOR_LATERAL_IZQ);
+  int Hde = analogRead(SENSOR_LATERAL_DER);
+
+  if (Hiz < umbral) {
+    Hiz = 1;
+  } else {
+    Hiz = 0;
+  }
+
+  if (Hde < umbral) {
+    Hde = 1;
+  } else {
+    Hde = 0;
+  }
+  
+  if (Hiz == 0 && Hde == 0) {
+    geo = 0;
+  }
+  if (Hiz == 1 && Hde == 0) {
+    geo = 1;
+  }
+  if (Hiz == 0 && Hde == 1) {
+    geo = 2;
+  }
+  if (Hiz == 1 && Hde == 1) {
+    geo = 3;
+  }
+
+  if (geo1 != geo) {
+    if (geo == 0 && geo1 == 1 && geo2 == 0) {
+      tone(BUZZER, 1000, 100);
+       //funcionHitoIz();
+    }
+    if (geo == 0 && geo1 == 2 && geo2 == 0) {
+      
+      fin++;
+      funcionHitoDe();
+    }
+    if (geo == 0 && ((geo1 == 3) || (geo2 == 3) || (geo3 == 3))) {
+
+      funcionCruce();
+    }
+    geo5 = geo4;
+    geo4 = geo3;
+    geo3 = geo2;
+    geo2 = geo1;
+    geo1 = geo;
+  }
+}
+
+void funcionCruce() {
+  Serial.println("Intersection");
+  tone(BUZZER, 2000, 500);
+}
+
+void funcionHitoDe() {
+
+  tone(BUZZER, 2000, 5000);
+  if (fin >= 2) {
+    //aqui va el codigo para frenar
+  }
+}
+
+void funcionHitoIz() {
+
+  tone(BUZZER, 2000, 1000);
+  //aqui va el codigo para los cambios de curvatura
 }
