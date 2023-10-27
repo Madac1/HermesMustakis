@@ -89,16 +89,18 @@ void moverMotores(int velocidadIzquierda, int velocidadDerecha) {
     //Hay que invertir el valor de velocidad 
     //ya que analogWrite solo acepta enteros positivos
   }
-
   if(velocidadDerecha >= 0)
   {
     digitalWrite(BIN1, HIGH);
     digitalWrite(BIN2, LOW);
     analogWrite(BPWM, velocidadDerecha);
   }
+  else
+  {
     digitalWrite(BIN1, LOW);
     digitalWrite(BIN2, HIGH);
     analogWrite(BPWM, -velocidadDerecha);
+  }
 }
 
 void loop() {
