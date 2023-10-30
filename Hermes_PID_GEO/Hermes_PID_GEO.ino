@@ -307,7 +307,7 @@ void setup()
   while(digitalRead(BOTON) == 0)
   {
     int Tp_bajo = Tp/2;
-    if(suma_hitos_izq %= 0)
+    if(suma_hitos_izq % 2)
     {
       seguidor(Kp, Ki, Kd, Tp_bajo, limite/2);
     }
@@ -336,7 +336,7 @@ void setup()
 
   while (digitalRead(BOTON) == 0)
   {
-    if(suma_hitos_izq %= 0)
+    if(suma_hitos_izq % 2)
     {
       seguidor(Kp, Ki, Kd, Tp, limite);
     }
@@ -346,6 +346,9 @@ void setup()
     }
     hitos();
   }
+  tono1();
+  tono4();
+  tono2();
 }
 
 void loop() 
