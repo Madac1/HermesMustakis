@@ -267,16 +267,21 @@ void funcionHitoIz()
   suma_hitos_izq++;
 }
 
-void setup() 
+void pinSet()
 {
-  Serial.begin(9600);
-
   pinMode(AIN1, OUTPUT);
   pinMode(AIN2, OUTPUT);
   pinMode(BIN1, OUTPUT);
   pinMode(BIN2, OUTPUT);
   pinMode(BUZZER, OUTPUT);
   pinMode(BOTON, INPUT);
+}
+
+void setup() 
+{
+  Serial.begin(9600);
+
+  pinSet();
 
   while(digitalRead(BOTON) == 0);
   
