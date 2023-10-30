@@ -25,7 +25,7 @@
 const float Kp = 0.4;  // Regula el factor proporcional (Proporcional a la posición)
 const float Ki = 0.5;     // Regula el factor integrante (Sumatoria de los errores)
 const float Kd = 80;   // Regula el factor derivado (Taza de cambio de posición)
-const float Tp = 80;    // Guarda la velocidad base
+const int Tp = 80;    // Guarda la velocidad base
 const int ref = 0;      // Guarda el punto central del sensor de linea
 
 int error2, error3, error4, error5, error6;
@@ -36,6 +36,7 @@ int geo = 0, geo1 = 0, geo2 = 0, geo3 = 0, geo4 = 0, geo5 = 0;
 int umbral = 750;
 int fin = 0;
 int suma_hitos_izq = 0;
+const int limite = Tp*(1 + (1/3));
 
 QTRSensorsAnalog qtra((unsigned char[]){ A5, A4, A3, A2, A1, A0 }, NUM_SENSOR, NUM_SAMPLES_PER_SENSOR, EMITTER_PIN);
 unsigned int sensorValues[NUM_SENSOR];
@@ -72,87 +73,107 @@ void moverMotores(int velocidadIzquierda, int velocidadDerecha) {
   }
 }
 
-void setup() 
+void tono1()
 {
-  Serial.begin(9600);
-
-  pinMode(AIN1, OUTPUT);
-  pinMode(AIN2, OUTPUT);
-  pinMode(BIN1, OUTPUT);
-  pinMode(BIN2, OUTPUT);
-  pinMode(BUZZER, OUTPUT);
-  pinMode(BOTON, INPUT);
-
-  while(digitalRead(BOTON) == 0);
-
   tone(BUZZER, NOTE_A6 /*1760*/, DELAY_NOTA);
   delay(DELAY_NOTA);
   tone(BUZZER, NOTE_E7 /*2637*/, DELAY_NOTA);
   delay(DELAY_NOTA);
-
-  for (int i = 0; i < 400; i++) 
-  {
-    qtra.calibrate();
-  }
-
-  tone(BUZZER, NOTE_E7, DELAY_NOTA);
-  delay(DELAY_NOTA);
-  tone(BUZZER, NOTE_A6, DELAY_NOTA);
-  delay(DELAY_NOTA);
-
-  while(digitalRead(BOTON) == 0);
-  tone(BUZZER, NOTE_E7, DELAY_NOTA);
-  delay(DELAY_NOTA);
-  tone(BUZZER, NOTE_A6, DELAY_NOTA);
-  delay(DELAY_NOTA);
 }
 
-
-
-void loop() 
+void tono2()
 {
-  while(digitalRead(BOTON) == 0)
-  {
-    int Tp_bajo = Tp/2;
-    if(suma_hitos_izq %= 0)
-    {
-      seguidor(Kp, Ki, Kd, Tp_bajo);
-    }
-    else
-    {
-      seguidor(Kp, Ki, Kd, Tp_bajo-10);
-    }
-    qtra.calibrate();
-    hitos();
-  }
-  while (digitalRead(BOTON) == 0)
-  {
-    if(suma_hitos_izq %= 0)
-    {
-      seguidor(Kp, Ki, Kd, Tp);
-      qtra.calibrate();
-    }
-    else
-    {
-      seguidor(Kp, Ki, Kd, Tp-30);
-      qtra.calibrate();
-    }
-    hitos();
-  }
-  
+  tone(BUZZER, NOTE_E7, DELAY_NOTA);
+  delay(DELAY_NOTA);
+  tone(BUZZER, NOTE_A6, DELAY_NOTA);
+  delay(DELAY_NOTA);
 }
 
-void seguidor(float Kp, float Ki, float Kd, int Tp)
+void tono3()
+{
+  tone(BUZZER, NOTE_A6, DELAY_NOTA);
+  delay(DELAY_NOTA);
+  tone(BUZZER, NOTE_A6, DELAY_NOTA);
+  delay(DELAY_NOTA);
+}
+
+void tono4()
+{
+  tone(BUZZER, NOTE_E7, DELAY_NOTA);
+  delay(DELAY_NOTA);
+  tone(BUZZER, NOTE_E7, DELAY_NOTA);
+  delay(DELAY_NOTA);
+}
+
+void calibrarPrincipales(int milisegundos)
+{
+  int milisegundos_anteriores = millis();
+  while (millis() - milisegundos_anteriores <= milisegundos)
+  {
+    qtra.calibrate();
+  }
+
+}
+
+int calibrarLaterales(int milisegundos)
+{
+  int milisegundos_anteriores = millis();
+  int mayor, menor;
+  while (millis() - milisegundos_anteriores <= milisegundos)
+  {
+    int sensor_izquierdo = analogRead(SENSOR_LATERAL_IZQ);
+    int sensor_derecho = analogRead(SENSOR_LATERAL_DER);
+    if(sensor_izquierdo < menor || sensor_derecho < menor)
+    {
+      if(sensor_izquierdo <= sensor_derecho)
+      {
+        menor = sensor_izquierdo;
+      }
+      else
+      {
+        menor = sensor_derecho;
+      }
+    }
+    if(sensor_izquierdo > mayor || sensor_derecho > mayor)
+    {
+      if(sensor_izquierdo >= sensor_derecho)
+      {
+        mayor = sensor_izquierdo;
+      }
+      else
+      {
+        mayor = sensor_derecho;
+      }
+    }
+  }
+  return (mayor + menor)/2;  
+}
+
+void seguidor(float Kp, float Ki, float Kd, int Tp, int lim)
 {
   int posicion = qtra.readLine(sensorValues, true, true); //Primero leer los valores de los sensores
   posicion = map(posicion, 0, 5000, -255, 255); //Para luego mapearlos con la función
 
   int error = posicion - ref;
-  integral = integral + error;
+  integral = integral + error + error2 + error3 + error4 + error5;
   int derivada = error - lastError;
   lastError = error;
 
+  error6 = error5;
+  error5 = error4;
+  error4 = error3;
+  error3 = error2;
+  error2 = lastError; 
+
   int giro = Kp * error + Ki * integral + Kd * derivada;
+  if (giro > lim)
+  {
+    giro = lim;
+  }
+  else if (giro < -lim)
+  {
+    giro = -lim;
+  }
 
   int velocidadIzq = Tp + giro;
   int velocidadDer = Tp - giro;
@@ -170,7 +191,6 @@ void hitos()
   if (geo1 != geo) {
     if (geo == 0 && geo1 == 1 && geo2 == 0) 
     {
-      tone(BUZZER, 1000, 100);
       funcionHitoIz();
     }
     if (geo == 0 && geo1 == 2 && geo2 == 0) 
@@ -180,7 +200,6 @@ void hitos()
     }
     if (geo == 0 && ((geo1 == 3) || (geo2 == 3) || (geo3 == 3))) 
     {
-
       funcionCruce();
     }
     geo5 = geo4;
@@ -228,22 +247,106 @@ int geo_actual(bool sensor_izq, bool sensor_der)
 }
 
 void funcionCruce() {
-  Serial.println("Intersection");
-  tone(BUZZER, 2000, 500);
+  tone(BUZZER, NOTE_A6, DELAY_NOTA * 2);
 }
 
 void funcionHitoDe() 
 {
-  tone(BUZZER, NOTE_A6 /*1760*/, 500);
+  tone(BUZZER, NOTE_A6, DELAY_NOTA * 2);
   if (fin >= 2) {
     while(digitalRead(BOTON) == 0){
       moverMotores(0,0);
     };
+    
   }
 }
 
 void funcionHitoIz() 
 {
-  tone(BUZZER, NOTE_E7 /*2637*/, DELAY_NOTA);
+  tone(BUZZER, NOTE_E7, DELAY_NOTA * 2);
   suma_hitos_izq++;
 }
+
+void setup() 
+{
+  Serial.begin(9600);
+
+  pinMode(AIN1, OUTPUT);
+  pinMode(AIN2, OUTPUT);
+  pinMode(BIN1, OUTPUT);
+  pinMode(BIN2, OUTPUT);
+  pinMode(BUZZER, OUTPUT);
+  pinMode(BOTON, INPUT);
+
+  while(digitalRead(BOTON) == 0);
+  
+  tono1();
+
+  calibrarPrincipales(10000);
+
+  tono4();
+
+  umbral = calibrarLaterales(5000);
+
+  tono2();
+
+  while(digitalRead(BOTON) == 0);
+  
+  tono2();
+  delay(400);
+  tono4();
+  delay(400);
+  tono4();
+  delay(400);
+  tono4();
+  delay(400);
+  tono4();
+  delay(400);
+  tono4();
+
+  while(digitalRead(BOTON) == 0)
+  {
+    int Tp_bajo = Tp/2;
+    if(suma_hitos_izq %= 0)
+    {
+      seguidor(Kp, Ki, Kd, Tp_bajo, limite/2);
+    }
+    else
+    {
+      seguidor(Kp, Ki, Kd, Tp_bajo-10, limite/2);
+    }
+    qtra.calibrate();
+    hitos();
+  }
+  tono1();
+
+  while (digitalRead(BOTON) == 0);
+
+  tono2();
+  delay(400);
+  tono4();
+  delay(400);
+  tono4();
+  delay(400);
+  tono4();
+  delay(400);
+  tono4();
+  delay(400);
+  tono4();
+
+  while (digitalRead(BOTON) == 0)
+  {
+    if(suma_hitos_izq %= 0)
+    {
+      seguidor(Kp, Ki, Kd, Tp, limite);
+    }
+    else
+    {
+      seguidor(Kp, Ki, Kd, Tp-30,limite);
+    }
+    hitos();
+  }
+}
+
+void loop() 
+{}
