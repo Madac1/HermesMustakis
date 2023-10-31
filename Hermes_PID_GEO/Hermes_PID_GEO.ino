@@ -16,6 +16,7 @@
 #define BPWM 5                    //Establece el pin de la alimentación B del puente H
 
 //Pines extras
+#define LED_INTEGRADO 13
 #define BUZZER 10                 //Establece el pin del Buzzer
 #define BOTON 12                  //Establece el pin del Boton
 
@@ -33,7 +34,7 @@ int integral = 0;       //Es la sumatoria de los errores
 int lastError;          //Auxiliar que guarda el error para un ciclo futuro
 
 int geo = 0, geo1 = 0, geo2 = 0, geo3 = 0, geo4 = 0, geo5 = 0;
-int umbral = 750;
+int umbral = 0;
 int fin = 0;
 int suma_hitos_izq = 0;
 const int limite = Tp*(1 + (1/3));
@@ -179,6 +180,11 @@ void seguidor(float Kp, float Ki, float Kd, int Tp, int lim)
   int velocidadDer = Tp - giro;
 
   moverMotores(velocidadIzq, velocidadDer);
+  
+  verbosidad_sensores(sensorValues, DEBUG);
+  Serial.print(" || ");
+  verbosidad_variables(error, integral, derivada, giro, DEBUG);
+  Serial.println();
 }
 
 void hitos() 
@@ -275,6 +281,41 @@ void pinSet()
   pinMode(BIN2, OUTPUT);
   pinMode(BUZZER, OUTPUT);
   pinMode(BOTON, INPUT);
+}
+
+void verbosidad_sensores(unsigned int sensor[], bool toggle)
+{
+  if(toggle)
+  {
+    for(int i = 0; i < 5; i++)
+    {
+      Serial.print(sensor[i]);
+      if(i<4)
+      {
+        Serial.print(" ");
+      }
+    }
+    Serial.print(" | ");
+    Serial.print(leerSensor(SENSOR_LATERAL_DER, umbral));
+    Serial.print(" ");
+    Serial.print(leerSensor(SENSOR_LATERAL_IZQ, umbral));
+  }
+}
+
+void verbosidad_variables(int proporcional, int integral, int derivada, int giro, bool toggle)
+{
+  if(toggle)
+  {
+    Serial.print(proporcional);
+    Serial.print(" ");
+    Serial.print(integral);
+    Serial.print(" ");
+    Serial.print(derivada);
+    Serial.print(" | ");
+    Serial.print(umbral);
+    Serial.print(" ");
+    Serial.print(giro);
+  }
 }
 
 void setup() 
