@@ -10,7 +10,7 @@
 //Pines puente H
 #define AIN1 7                    //Establece el pin de la primera fase A del puente H
 #define AIN2 8                    //Establece el pin de la segunda fase A del puente H
-#define PWMA 6                    //Establece el pin de la alimentación A del puente H
+#define APWM 6                    //Establece el pin de la alimentación A del puente H
 #define BIN2 9                    //Establece el pin de la segunda fase B del puente H
 #define BIN1 4                    //Establece el pin de la primera fase B del puente H
 #define BPWM 5                    //Establece el pin de la alimentación B del puente H
@@ -33,48 +33,42 @@ int error2, error3, error4, error5, error6;
 int integral = 0;       //Es la sumatoria de los errores
 int lastError;          //Auxiliar que guarda el error para un ciclo futuro
 
-int geo = 0, geo1 = 0, geo2 = 0, geo3 = 0, geo4 = 0, geo5 = 0;
+int geo = 0, geo_aux = 0, geo2 = 0, geo3 = 0, geo4 = 0, geo5 = 0;
 int umbral = 0;
 int fin = 0;
 int suma_hitos_izq = 0;
-const int limite = Tp*(1 + (1/3));
+const int limite = 255;
 
 QTRSensorsAnalog qtra((unsigned char[]){ A5, A4, A3, A2, A1, A0 }, NUM_SENSOR, NUM_SAMPLES_PER_SENSOR, EMITTER_PIN);
 unsigned int sensorValues[NUM_SENSOR];
 
-void moverMotores(int velocidadIzquierda, int velocidadDerecha) {
+void mover(int velocidadIzquierda, int velocidadDerecha) {
   //Hay que usar velocidades enteras (int) ya que analogWrite solo acepta enteros.
-  if(velocidadIzquierda >= 0)
+  moverMotor(velocidadIzquierda, AIN1, AIN2, APWM);
+  moverMotor(velocidadDerecha, BIN1, BIN2, BPWM);
+}
+
+void moverMotor(int vel, unsigned int IN1, unsigned int IN2, unsigned int PWM)
+{
+  if(vel >= 0)
   //Separar en casos de velocidaddes mayores que 0 y menores que 0 (en reversa) para programar
   //correctamente la polaridad de los motores y su dirección
   {
-    digitalWrite(AIN1, HIGH);
-    digitalWrite(AIN2, LOW);
-    analogWrite(PWMA, velocidadIzquierda);
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+    analogWrite(PWM, vel);
   }
   else
   {
-    digitalWrite(AIN1, LOW);
-    digitalWrite(AIN2, HIGH);
-    analogWrite(PWMA, -velocidadIzquierda); 
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+    analogWrite(PWM, -vel); 
     //Hay que invertir el valor de velocidad 
     //ya que analogWrite solo acepta enteros positivos
   }
-  if(velocidadDerecha >= 0)
-  {
-    digitalWrite(BIN1, HIGH);
-    digitalWrite(BIN2, LOW);
-    analogWrite(BPWM, velocidadDerecha);
-  }
-  else
-  {
-    digitalWrite(BIN1, LOW);
-    digitalWrite(BIN2, HIGH);
-    analogWrite(BPWM, -velocidadDerecha);
-  }
 }
 
-void tono1()
+void tono_subida()
 {
   tone(BUZZER, NOTE_A6 /*1760*/, DELAY_NOTA);
   delay(DELAY_NOTA);
@@ -82,7 +76,7 @@ void tono1()
   delay(DELAY_NOTA);
 }
 
-void tono2()
+void tono_bajada()
 {
   tone(BUZZER, NOTE_E7, DELAY_NOTA);
   delay(DELAY_NOTA);
@@ -90,7 +84,7 @@ void tono2()
   delay(DELAY_NOTA);
 }
 
-void tono3()
+void tono_bajo()
 {
   tone(BUZZER, NOTE_A6, DELAY_NOTA);
   delay(DELAY_NOTA);
@@ -98,7 +92,7 @@ void tono3()
   delay(DELAY_NOTA);
 }
 
-void tono4()
+void tono_alto()
 {
   tone(BUZZER, NOTE_E7, DELAY_NOTA);
   delay(DELAY_NOTA);
@@ -106,22 +100,13 @@ void tono4()
   delay(DELAY_NOTA);
 }
 
-void calibrarPrincipales(int milisegundos)
+int calibrar(int milisegundos)
 {
-  int milisegundos_anteriores = millis();
+  unsigned long milisegundos_anteriores = millis();
+  unsigned int mayor, menor;
   while (millis() - milisegundos_anteriores <= milisegundos)
   {
     qtra.calibrate();
-  }
-
-}
-
-int calibrarLaterales(int milisegundos)
-{
-  int milisegundos_anteriores = millis();
-  int mayor, menor;
-  while (millis() - milisegundos_anteriores <= milisegundos)
-  {
     int sensor_izquierdo = analogRead(SENSOR_LATERAL_IZQ);
     int sensor_derecho = analogRead(SENSOR_LATERAL_DER);
     if(sensor_izquierdo < menor || sensor_derecho < menor)
@@ -147,13 +132,12 @@ int calibrarLaterales(int milisegundos)
       }
     }
   }
-  return (mayor + menor)/2;  
+  return (mayor + menor)/2; 
 }
 
 void seguidor(float Kp, float Ki, float Kd, int Tp, int lim)
 {
-  int posicion = qtra.readLine(sensorValues, true, true); //Primero leer los valores de los sensores
-  posicion = map(posicion, 0, 5000, -255, 255); //Para luego mapearlos con la función
+  int posicion = leerPosicion(qtra);
 
   int error = posicion - ref;
   integral = integral + error + error2 + error3 + error4 + error5;
@@ -179,7 +163,7 @@ void seguidor(float Kp, float Ki, float Kd, int Tp, int lim)
   int velocidadIzq = Tp + giro;
   int velocidadDer = Tp - giro;
 
-  moverMotores(velocidadIzq, velocidadDer);
+  mover(velocidadIzq, velocidadDer);
   
   verbosidad_sensores(sensorValues, DEBUG);
   Serial.print(" || ");
@@ -192,27 +176,23 @@ void hitos()
   bool sensor_izq = leerSensor(SENSOR_LATERAL_IZQ, umbral);
   bool sensor_der = leerSensor(SENSOR_LATERAL_DER, umbral);
   
-  geo = geo_actual(sensor_izq, sensor_der);
+  geo = geoActual(sensor_izq, sensor_der);
 
-  if (geo1 != geo) {
-    if (geo == 0 && geo1 == 1 && geo2 == 0) 
+  if (geo_aux != geo) {
+    if (geo == 0 && geo_aux == 1) 
     {
       funcionHitoIz();
     }
-    if (geo == 0 && geo1 == 2 && geo2 == 0) 
+    if (geo == 0 && geo_aux == 2) 
     {
       fin++;
       funcionHitoDe();
     }
-    if (geo == 0 && ((geo1 == 3) || (geo2 == 3) || (geo3 == 3))) 
+    if (geo == 0 && ((geo_aux == 3))) 
     {
       funcionCruce();
     }
-    geo5 = geo4;
-    geo4 = geo3;
-    geo3 = geo2;
-    geo2 = geo1;
-    geo1 = geo;
+    geo_aux = geo;
   }
 }
 
@@ -230,7 +210,7 @@ bool leerSensor(int pin, int umbral)
   return (bool) sensor;
 }
 
-int geo_actual(bool sensor_izq, bool sensor_der)
+int geoActual(bool sensor_izq, bool sensor_der)
 {
   int geo;
   if (sensor_izq == 0 && sensor_der == 0) 
@@ -261,7 +241,7 @@ void funcionHitoDe()
   tone(BUZZER, NOTE_A6, DELAY_NOTA * 2);
   if (fin >= 2) {
     while(digitalRead(BOTON) == 0){
-      moverMotores(0,0);
+      mover(0,0);
     };
     
   }
@@ -273,7 +253,7 @@ void funcionHitoIz()
   suma_hitos_izq++;
 }
 
-void pinSet()
+void hermesPinSet()
 {
   pinMode(AIN1, OUTPUT);
   pinMode(AIN2, OUTPUT);
@@ -318,83 +298,57 @@ void verbosidad_variables(int proporcional, int integral, int derivada, int giro
   }
 }
 
+int leerPosicion(QTRSensorsAnalog sensor)
+{
+  int pos = qtra.readLine(sensorValues, true, true); //Primero leer los valores de los sensores
+  pos = map(pos, 0, 5000, -255, 255); //Para luego mapearlos con la función
+  return pos;
+}
+
 void setup() 
 {
   Serial.begin(9600);
 
-  pinSet();
+  hermesPinSet();
 
   while(digitalRead(BOTON) == 0);
   
-  tono1();
-
-  calibrarPrincipales(10000);
-
-  tono4();
-
-  umbral = calibrarLaterales(5000);
-
-  tono2();
+  tono_subida();
+  delay(800);
+  tone(BUZZER, NOTE_E7, 200);
+  delay(200);
+  tone(BUZZER, NOTE_E7, 200);
+  delay(200);
+  tone(BUZZER, NOTE_E7, 200);
+  delay(200);
+  
+  mover(30,-30);
+  umbral = calibrar(10000);
+  mover(30,-30);
+  while(leerPosicion(qtra) > 5 || leerPosicion(qtra) < -5);
+  mover(0,0);
+  tono_bajada();
 
   while(digitalRead(BOTON) == 0);
   
-  tono2();
+  tono_bajada();
   delay(400);
-  tono4();
+  tono_alto();
   delay(400);
-  tono4();
+  tono_alto();
   delay(400);
-  tono4();
-  delay(400);
-  tono4();
-  delay(400);
-  tono4();
+  tono_alto();
 
   while(digitalRead(BOTON) == 0)
   {
-    int Tp_bajo = Tp/2;
-    if(suma_hitos_izq % 2)
-    {
-      seguidor(Kp, Ki, Kd, Tp_bajo, limite/2);
-    }
-    else
-    {
-      seguidor(Kp, Ki, Kd, Tp_bajo-10, limite/2);
-    }
-    qtra.calibrate();
+    seguidor(Kp, Ki, Kd, Tp, limite);
     hitos();
   }
-  tono1();
 
-  while (digitalRead(BOTON) == 0);
-
-  tono2();
-  delay(400);
-  tono4();
-  delay(400);
-  tono4();
-  delay(400);
-  tono4();
-  delay(400);
-  tono4();
-  delay(400);
-  tono4();
-
-  while (digitalRead(BOTON) == 0)
-  {
-    if(suma_hitos_izq % 2)
-    {
-      seguidor(Kp, Ki, Kd, Tp, limite);
-    }
-    else
-    {
-      seguidor(Kp, Ki, Kd, Tp-30,limite);
-    }
-    hitos();
-  }
-  tono1();
-  tono4();
-  tono2();
+  mover(0,0);
+  tono_subida();
+  tono_alto();
+  tono_bajada();
 }
 
 void loop() 
