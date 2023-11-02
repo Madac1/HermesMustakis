@@ -1,5 +1,6 @@
 #include <QTRSensors.h>
 #include <Arduino.h>
+#include <Arduino_BuiltIn.h>
 #include "./HermesMustakis.h"
 
 
@@ -96,7 +97,7 @@ int hermesMustakis::calibrar(int milisegundos)
   umbral = (mayor + menor) / 2; 
 }
 
-void hermesMustakis::seguidor(float Kp, float Ki, float Kd, int Tp, int lim, int geo, int geoAux)
+void hermesMustakis::seguidor(float Kp, float Ki, float Kd, int Tp)
 {
   int posicion = leerPosicion(qtra);
 
@@ -106,13 +107,13 @@ void hermesMustakis::seguidor(float Kp, float Ki, float Kd, int Tp, int lim, int
   lastError = error;
 
   int giro = Kp * error + Ki * integral + Kd * derivada;
-  if (giro > lim)
+  if (giro > limite)
   {
-    giro = lim;
+    giro = limite;
   }
-  else if (giro < -lim)
+  else if (giro < -limite)
   {
-    giro = -lim;
+    giro = -limite;
   }
 
   int velocidadIzq = Tp + giro;
@@ -136,16 +137,16 @@ void hermesMustakis::hitos()
   if (geo_aux != geo) {
     if (geo == 0 && geo_aux == 1) 
     {
-      funcionHitoIz();
+      hitoIzquierdo();
     }
     if (geo == 0 && geo_aux == 2) 
     {
       fin++;
-      funcionHitoDe();
+      hitoDerecho();
     }
     if (geo == 0 && ((geo_aux == 3))) 
     {
-      funcionCruce();
+      cruce();
     }
     geo_aux = geo;
   }

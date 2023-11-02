@@ -1,17 +1,10 @@
 #include <HermesMustakis.h>
 
-
 const float Kp = 0.4;  // Regula el factor proporcional (Proporcional a la posición)
 const float Ki = 0.5;     // Regula el factor integrante (Sumatoria de los errores)
 const float Kd = 80;   // Regula el factor derivado (Taza de cambio de posición)
 const int Tp = 80;    // Guarda la velocidad base
 const int ref = 0;      // Guarda el punto central del sensor de linea
-
-
-
-
-QTRSensorsAnalog qtra((unsigned char[]){ A5, A4, A3, A2, A1, A0 }, NUM_SENSOR, NUM_SAMPLES_PER_SENSOR, EMITTER_PIN);
-unsigned int sensorValues[NUM_SENSOR];
 
 hermesMustakis hermes;
 
@@ -35,7 +28,7 @@ void setup()
   hermes.mover(30,-30);
   hermes.calibrar(10000);
   hermes.mover(30,-30);
-  while(hermes.leerPosicion(qtra) > 5 || hermes.leerPosicion(qtra) < -5);
+  while(hermes.leerPosicion(hermes.qtra) > 5 || hermes.leerPosicion(hermes.qtra) < -5);
   hermes.mover(0,0);
   hermes.tono_bajada();
 

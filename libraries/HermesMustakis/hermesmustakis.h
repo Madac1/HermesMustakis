@@ -1,8 +1,8 @@
 
 #ifndef HERMESMUSTAKIS_H
 
-#include "../QTRSensors/QTRSensors.h"
-#include "../Pitches/pitches.h"
+#include <QTRSensors.h>
+#include <pitches.h>
 
 #define DEBUG true                //
 #define DELAY_NOTA 200            //delay de las notas de feedback
@@ -36,17 +36,12 @@ class hermesMustakis
         unsigned int fin;
         unsigned int geo;
         unsigned const int limite;
-        unsigned int geo, geo_aux;
+        unsigned int geo_aux;
+        int ref;
+        unsigned int* sensorValues;
+        const unsigned char* pines;
 
     public:
-        hermesMustakis(){
-            unsigned long integral = 0;       //Es la sumatoria de los errores
-            unsigned int geo = 0, geo_aux = 0;
-            unsigned int umbral = 0;
-            unsigned int fin = 0;
-            unsigned int suma_hitos_izq = 0;
-            const int limite = 250;
-        };
         QTRSensorsAnalog qtra;
         void mover(int velocidadIzquierda, int velocidadDerecha);
         void moverMotor(int vel, unsigned int IN1, unsigned int IN2, unsigned int PWM);
@@ -55,7 +50,7 @@ class hermesMustakis
         void tono_bajo();
         void tono_alto();
         int calibrar(int milisegundos);
-        void seguidor(float Kp, float Ki, float Kd, int Tp, int lim, int geo, int geoAux);
+        void seguidor(float Kp, float Ki, float Kd, int Tp);
         void hitos();
         bool leerSensor(int pin, int umbral);
         int geoActual(bool sensor_izq, bool sensor_der);
@@ -66,6 +61,16 @@ class hermesMustakis
         void verbosidad_sensores(unsigned int sensor[], bool toggle);
         void verbosidad_variables(int proporcional, int integral, int derivada, int giro, bool toggle);
         int leerPosicion(QTRSensorsAnalog sensor);
+        hermesMustakis(){
+            unsigned long integral = 0;       //Es la sumatoria de los errores
+            unsigned int geo = 0, geo_aux = 0;
+            unsigned int umbral = 0;
+            unsigned int fin = 0;
+            unsigned int suma_hitos_izq = 0;
+            const int limite = 250;
+            unsigned char pines[] = {A5, A4, A3, A2, A1, A0};
+            QTRSensorsAnalog qtra(pines, NUM_SENSOR, NUM_SAMPLES_PER_SENSOR, EMITTER_PIN);
+        };
 };
 
 #endif
