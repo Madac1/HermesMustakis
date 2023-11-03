@@ -38,11 +38,11 @@ class hermesMustakis
         unsigned const int limite;
         unsigned int geo_aux;
         int ref;
-        unsigned int* sensorValues;
         const unsigned char* pines;
 
     public:
         QTRSensorsAnalog qtra;
+        unsigned int* sensorValues;
         void mover(int velocidadIzquierda, int velocidadDerecha);
         void moverMotor(int vel, unsigned int IN1, unsigned int IN2, unsigned int PWM);
         void tono_subida();
@@ -67,7 +67,7 @@ class hermesMustakis
             unsigned int umbral = 0;
             unsigned int fin = 0;
             unsigned int suma_hitos_izq = 0;
-            const int limite = 250;
+            unsigned const int limite = 250;
             unsigned char pines[] = {A5, A4, A3, A2, A1, A0};
             QTRSensorsAnalog qtra(pines, NUM_SENSOR, NUM_SAMPLES_PER_SENSOR, EMITTER_PIN);
         };

@@ -17,7 +17,7 @@ ArduControllerBluetooth bt(RX_BT, TX_BT, 9600);
 void setup()
 {
   Serial.begin(9600);
-
+  Serial.println("Inicializando...");
   hermes.init();
   bt.begin();  
   bt.sendATCommand("AT+NAMEHermesTemuco");
@@ -27,12 +27,13 @@ void setup()
   hermes.tono_subida();
   delay(800);
   tone(BUZZER, NOTE_E7, 200);
-  delay(200);
+  delay(400);
   tone(BUZZER, NOTE_E7, 200);
-  delay(200);
+  delay(400);
   tone(BUZZER, NOTE_E7, 200);
-  delay(200);
+  delay(400);
   
+  Serial.println("Comenzando calibración.");
   hermes.mover(30,-30);
   hermes.calibrar(10000);
   hermes.mover(0,0);
@@ -48,6 +49,7 @@ void setup()
   delay(400);
   hermes.tono_alto();
 
+  Serial.println("Comenzando seguimiento de linea.");
   while(digitalRead(BOTON) == 0)
   {
     bt.communication();
@@ -57,7 +59,6 @@ void setup()
 
   hermes.mover(0,0);
   hermes.tono_subida();
-  hermes.tono_alto();
   hermes.tono_bajada();
 }
 

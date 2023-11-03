@@ -247,7 +247,7 @@ void hermesMustakis::verbosidad_variables(int proporcional, int integral, int de
     Serial.print(integral);
     Serial.print(" ");
     Serial.print(derivada);
-    Serial.print(" | ");
+    Serial.print(" ");
     Serial.print(giro);
   }
 }

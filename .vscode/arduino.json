@@ -3,5 +3,5 @@
     "programmer": "avrisp",
     "sketch": "Hermes_PID_GEO\\Hermes_PID_GEO.ino",
     "port": "COM8",
-    "configuration": "cpu=atmega328"
+    "configuration": "cpu=atmega328old"
 }

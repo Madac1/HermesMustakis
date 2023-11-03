@@ -32,20 +32,19 @@ int derivada = 0;   //Derivada
 
 //referencia y velocidad base
 int ref = 0;
-int Tp = 80;
+int Tp = 50;
 
 char com;
 int mod;
 
 void setup() {
   //Seteo pines motor  
-  pinMode(BIN2  , OUTPUT);
-  pinMode(BIN1  , OUTPUT);
-  pinMode(PWMB  , OUTPUT);
-  pinMode(AIN1  , OUTPUT);
-  pinMode(AIN2  , OUTPUT);
-  pinMode(PWMA  , OUTPUT);
-  //seteo pin boton
+  pinMode(BIN2, OUTPUT);
+  pinMode(BIN1, OUTPUT);
+  pinMode(PWMB, OUTPUT);
+  pinMode(AIN1, OUTPUT);
+  pinMode(AIN2, OUTPUT);
+  pinMode(PWMA, OUTPUT);
   pinMode(BOTON, INPUT);
 
   //calibracion sensor
@@ -84,68 +83,7 @@ void loop() {
 
   //Se actualiza el último error
   lastError = error; 
-/*  
-  while(Serial.available() > 0)
-  {
-    com = Serial.read();
-    if (com == 4) {
-      mod = 4;
-    }
-    if (com == 3) {
-      mod = 3;
-    }
-    if (com == 2) {
-      mod = 2;
-    }
-    if(com == 1 && mod == 4)
-    {
-      KD = KD + 0.02;
-    }
-    if(com == 0 && mod == 4)
-    {
-      KD = KD - 0.02;
-    }
-    if(com == 1 && mod == 3)
-    {
-      KI = KI + 0.02;
-    }
-    if(com == 0 && mod == 3)
-    {
-      KI = KI - 0.02;
-    }
-    if(com == 1 && mod == 2)
-    {
-      KP = KP + 0.02;
-    }
-    if(com == 0 && mod == 2)
-    {
-      KP = KP - 0.02;
-    }
-    Serial.flush();
-  }
-  
-  Serial.print(posicion); 
-  Serial.print(" "); 
-  Serial.print(giro); 
-  Serial.print(" | "); 
-  Serial.print(error); 
-  Serial.print(" "); 
-  Serial.print(integral); 
-  Serial.print(" "); 
-  Serial.print(derivada);
-  Serial.print(" | "); 
-  Serial.print(velizq);
-  Serial.print(" "); 
-  Serial.print(velder);
-  Serial.print(" | "); 
-  Serial.print(KP);
-  Serial.print(" "); 
-  Serial.print(KI);
-  Serial.print(" "); 
-  Serial.print(KD);
-  Serial.println();
-  */
-}
+
 //accionamiento motor izquierdo
 void Motoriz(int value) {
   if ( value >= 0 ) {
