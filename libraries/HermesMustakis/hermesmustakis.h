@@ -14,8 +14,8 @@
 #define AIN1 7                    //Establece el pin de la primera fase A del puente H
 #define AIN2 8                    //Establece el pin de la segunda fase A del puente H
 #define APWM 6                    //Establece el pin de la alimentación A del puente H
-#define BIN2 9                    //Establece el pin de la segunda fase B del puente H
-#define BIN1 4                    //Establece el pin de la primera fase B del puente H
+#define BIN1 9                    //Establece el pin de la segunda fase B del puente H
+#define BIN2 4                    //Establece el pin de la primera fase B del puente H
 #define BPWM 5                    //Establece el pin de la alimentación B del puente H
 
 //Pines extras
